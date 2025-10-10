@@ -1,0 +1,37 @@
+---
+title: "HW2"
+format: html
+editor: visual
+---
+
+## Preamble
+
+```{r}
+#Library Loading
+library(sf)
+library(here)
+library(tidyverse)
+library(tmap)
+library(viridis) 
+#data loading
+ejscreen <- st_read(here("data", "ejscreen", "EJSCREEN_2023_BG_StatePct_with_AS_CNMI_GU_VI.gdb"))
+HOLC <- st_read(here("data", "mapping-inequality", "mapping-inequality-los-angeles.json"))
+BDobs <- st_read(here("data", "gbif-birds-LA", "gbif-birds-LA.shp"))
+```
+
+# Part 1: Legacy of redlining in current environmental (in)justice
+
+#### Create a map of historical redlining neighborhoods
+
+-   neighborhoods colored by HOLC grade
+-   an appropriate base map
+-   a clear title and legend
+```{r}
+view(HOLC)
+tm_shape(HOLC) +
+  tm_fill(
+    "grade",
+    fill.legend = tm_legend(title = "Grade of neighborhoods in LA"),
+    tm_title_out("Redlining in Los Angeles")
+  )
+```
