@@ -12,7 +12,8 @@ library(sf)
 library(here)
 library(tidyverse)
 library(tmap)
-library(viridis) 
+library(viridis)
+
 #data loading
 ejscreen <- st_read(here("data", "ejscreen", "EJSCREEN_2023_BG_StatePct_with_AS_CNMI_GU_VI.gdb"))
 HOLC <- st_read(here("data", "mapping-inequality", "mapping-inequality-los-angeles.json"))
@@ -26,12 +27,29 @@ BDobs <- st_read(here("data", "gbif-birds-LA", "gbif-birds-LA.shp"))
 -   neighborhoods colored by HOLC grade
 -   an appropriate base map
 -   a clear title and legend
+
 ```{r}
-view(HOLC)
 tm_shape(HOLC) +
-  tm_fill(
-    "grade",
-    fill.legend = tm_legend(title = "Grade of neighborhoods in LA"),
-    tm_title_out("Redlining in Los Angeles")
-  )
+  tm_polygons(
+    fill = "grade",
+    fill.legend = tm_legend(title = "Grade of neighborhoods in LA")
+  ) +
+    tm_borders(col = "black") +
+  tm_title_out("Redlining in Los Angeles")
 ```
+#### Create a table summarizing
+- The percentage of census block groups that fall within each HOLC grade
+- Also include the percent of census block groups that don’t fall within a HOLC grade
+```{r}
+percenttable <- HOLC |>
+  st_drop_geometry() |>
+  dplyr::count(grade, name = "n_blocks") |>
+  dplyr::mutate(pct_blocks = 100 * n_blocks / sum(n_blocks))
+view(percenttable)
+```
+#### Create at least two visualizations summarizing current conditions (from the EJScreen data) within HOLC grades using the mean of the following variables (you may combine variables or create separate plots):
+- % low income
+- Percentile for Particulate Matter 2.5
+- percentile for low life expectancy
+- Use ggplot for your visualizations! You will first need to calculate mean of each variable grouped by HOLC grade.
+
