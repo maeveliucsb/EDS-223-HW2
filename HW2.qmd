@@ -62,33 +62,28 @@ view(percenttable)
 
 ```{r}
 EJLA <- ejscreen %>% filter(CNTY_NAME == 'Los Angeles County') #filtering for just Los Angeles
-st_crs(EJLA) == st_crs(HOLC) #checking if the crs matches
-EJLA <- st_transform(EJLA, crs = st_crs(HOLC)) #transforming CRS
-HOLC <- st_make_valid(HOLC) #running this, because when I tried to marry the datasets, (st_join) I was getting errors, this should eliminate extras
+if(st_crs(HOLC) != st_crs(EJLA)){
+  warning("Make sure to match CRS!")
+  HOLC <- st_transform(EJLA, crs = st_crs(EJLA))
+}
 
-EJLA_HOLC <- st_join(EJLA, HOLC, join = st_intersects) #marrying the datasets
-names(EJLA_HOLC)
-#computing the mean by grade
-means_by_grade <- EJLA_HOLC %>%
-  sf::st_drop_geometry() %>%
-  dplyr::group_by(grade) %>%
-  dplyr::summarise(
-    mean_low_income_pct    = mean(LOWINCPCT, na.rm = TRUE),
-    mean_pm25_percentile   = mean(P_PM25,    na.rm = TRUE), 
-    mean_life_expectancy   = mean(LIFEEXPPCT, na.rm = TRUE)
-  )
+EJLA_HOLC <- st_join(EJLA,HOLC)
+view(EJLA_HOLC)
+#HOLC <- st_make_valid(HOLC) #running this, because when I tried to marry the data sets, (st_join) I was getting errors, this should eliminate geometry issues, this is what the internet said. 
+
+#making them friends (joining)
+#EJLA_HOLC <- st_join(EJLA, HOLC, join = st_intersects)
 
 #Visualization code
-ggplot(means_by_grade, aes(x = grade, y = mean_low_income_pct)) +
-  geom_col() +
-  labs(
-    title = "% Low Income by Grade (LA County)",
-    x = "Grade",
-    y = "Mean % Low Income (block-group mean within grade)"
-  ) +
-  theme_minimal(base_size = 12)
+tm_shape(HOLC) + 
+  tm_polygons(fill = EJLA$LOWINCPCT
+              fill = grade) +
+  
+
 ```
+
 ####Plot 2
+
 ```{r}
 #Visualization code
 ggplot(means_by_grade, aes(x = grade, y = mean_pm25_percentile)) +
@@ -100,6 +95,7 @@ ggplot(means_by_grade, aes(x = grade, y = mean_pm25_percentile)) +
   ) +
   theme_minimal(base_size = 12)
 ```
+
 ```{r}
 ggplot(means_by_grade, aes(x = grade, y = mean_life_expectancy)) +
   geom_col() +
@@ -110,6 +106,7 @@ ggplot(means_by_grade, aes(x = grade, y = mean_life_expectancy)) +
   ) +
   theme_minimal(base_size = 12)
 ```
+
 #### Write a brief paragraph reflecting on these results
 
-# Part 2: Legacy of redlining in current environmental (in)justice
+# Part 2: Legacy of redlining in biodiversity observations
