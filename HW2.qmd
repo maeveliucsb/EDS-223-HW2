@@ -13,6 +13,7 @@ library(here)
 library(tidyverse)
 library(tmap)
 library(viridis)
+library(scales)
 
 #data loading
 ejscreen <- st_read(here("data", "ejscreen", "EJSCREEN_2023_BG_StatePct_with_AS_CNMI_GU_VI.gdb"))
@@ -62,51 +63,68 @@ view(percenttable)
 
 ```{r}
 EJLA <- ejscreen %>% filter(CNTY_NAME == 'Los Angeles County') #filtering for just Los Angeles
-if(st_crs(HOLC) != st_crs(EJLA)){
-  warning("Make sure to match CRS!")
-  HOLC <- st_transform(EJLA, crs = st_crs(EJLA))
+
+#making geometries valid
+HOLC <- st_make_valid(HOLC)
+EJLA <- st_make_valid(EJLA)
+#aligning CRSs without overwriting
+if (st_crs(HOLC) != st_crs(EJLA)) {
+  HOLC <- st_transform(HOLC, st_crs(EJLA))
 }
-
-EJLA_HOLC <- st_join(EJLA,HOLC)
-view(EJLA_HOLC)
-#HOLC <- st_make_valid(HOLC) #running this, because when I tried to marry the data sets, (st_join) I was getting errors, this should eliminate geometry issues, this is what the internet said. 
-
-#making them friends (joining)
-#EJLA_HOLC <- st_join(EJLA, HOLC, join = st_intersects)
-
-#Visualization code
-tm_shape(HOLC) + 
-  tm_polygons(fill = EJLA$LOWINCPCT
-              fill = grade) +
-  
+#drop the block groups onto the HOLC map; each block group gets the grade of the HOLC polygon it lands in.
+EJLA_HOLC <- st_join(EJLA, HOLC["grade"], join = st_intersects)
+names(EJLA_HOLC)
+#finding the means 
+means_by_grade <- EJLA_HOLC |>
+  st_drop_geometry() |>
+  group_by(grade) |>
+  summarise(
+    mean_low_income_pct        = mean(LOWINCPCT,   na.rm = TRUE),
+    mean_pm25_percentile       = mean(PM25,     na.rm = TRUE),
+    mean_lifeexp_percentile    = mean(LIFEEXPPCT,  na.rm = TRUE),
+    .groups = "drop"
+  )
+#visualization 1
+ggplot(means_by_grade, aes(x = grade, y = mean_low_income_pct)) +
+  geom_col() +
+  scale_y_continuous(labels = label_percent(accuracy = 1, scale = 1)) +
+  labs(
+    title = "% Low Income by HOLC Grade (LA County)",
+    x = "HOLC Grade",
+    y = "Mean % Low Income (block-group mean within grade)"
+  ) +
+  theme_minimal(base_size = 12)
 
 ```
 
 ####Plot 2
 
 ```{r}
-#Visualization code
-ggplot(means_by_grade, aes(x = grade, y = mean_pm25_percentile)) +
-  geom_col() +
-  labs(
-    title = "Percentile of 2.5 Particulate Matter by Grade (LA County)",
-    x = "Grade",
-    y = "2.5 Particulate Matter 2.5 Percentile (block-group mean within grade)", 
-  ) +
-  theme_minimal(base_size = 12)
-```
+plot_long <- means_by_grade %>%
+  select(grade,
+         `PM2.5 Percentile` = mean_pm25_percentile,
+         `Low Life Expectancy Percentile` = mean_lifeexp_percentile) %>%
+  pivot_longer(-grade, names_to = "indicator", values_to = "percentile")
 
-```{r}
-ggplot(means_by_grade, aes(x = grade, y = mean_life_expectancy)) +
-  geom_col() +
+ggplot(plot_long, aes(x = grade, y = percentile)) +
+  geom_point(size = 3) +
+  geom_line(aes(group = indicator)) +
+  facet_wrap(~ indicator, ncol = 1, scales = "free_y") +
   labs(
-    title = "Life expectancy by Grade (LA County)",
-    x = "Grade",
-    y = "Mean Life Expectancy (block-group mean within grade)"
+    title = "Environmental & Health Percentiles by HOLC Grade (LA County)",
+    x = "HOLC Grade",
+    y = "Mean Percentile (0–100)"
   ) +
   theme_minimal(base_size = 12)
+
 ```
 
 #### Write a brief paragraph reflecting on these results
 
 # Part 2: Legacy of redlining in biodiversity observations
+#### A figure summarizing the percent of observations within redlined neighborhoods within each HOLC grade
+- The percentage of bird observations within each HOLC grade
+- Include an appropriate title, axis labels, and legend
+```{r}
+
+```
