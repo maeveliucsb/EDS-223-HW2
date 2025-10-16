@@ -73,7 +73,7 @@ if (st_crs(HOLC) != st_crs(EJLA)) {
 }
 #drop the block groups onto the HOLC map; each block group gets the grade of the HOLC polygon it lands in.
 EJLA_HOLC <- st_join(EJLA, HOLC["grade"], join = st_intersects)
-names(EJLA_HOLC)
+
 #finding the means 
 means_by_grade <- EJLA_HOLC |>
   st_drop_geometry() |>
@@ -126,5 +126,31 @@ ggplot(plot_long, aes(x = grade, y = percentile)) +
 - The percentage of bird observations within each HOLC grade
 - Include an appropriate title, axis labels, and legend
 ```{r}
+#making geometries valid
+BDobs <- st_make_valid(BDobs)
+#aligning CRSs without overwriting
+if (st_crs(HOLC) != st_crs(BDobs)) {
+  HOLC <- st_transform(HOLC, st_crs(BDobs))
+}
+#marrying the datasets
+Holc_Bdobs <- st_join(BDobs, HOLC["grade"], join = st_intersects)
+
+#finding the amount of visualizations in each redlined area
+gradebirds <- Holc_Bdobs |>
+  st_drop_geometry() |>
+  dplyr::count(grade, name = "Observation Amount") #|>
+  #dplyr::mutate(pct_blocks = 100 * n_blocks / sum(n_blocks))
+view(gradebirds)
+
+#Visualization
+ggplot(gradebirds, aes(x = grade, y = `Observation Amount`)) +
+  geom_col() +
+  scale_y_continuous(labels = comma) +  
+  labs(
+    title = "Bird Observations by HOLC Grade",
+    x = "HOLC Grade",
+    y = "Bird Observations (count)"
+  ) +
+  theme_minimal(base_size = 12)
 
 ```
