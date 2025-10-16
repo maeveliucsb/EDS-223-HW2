@@ -121,6 +121,7 @@ ggplot(plot_long, aes(x = grade, y = percentile)) +
 
 #### Write a brief paragraph reflecting on these results
 
+
 # Part 2: Legacy of redlining in biodiversity observations
 #### A figure summarizing the percent of observations within redlined neighborhoods within each HOLC grade
 - The percentage of bird observations within each HOLC grade
@@ -135,11 +136,10 @@ if (st_crs(HOLC) != st_crs(BDobs)) {
 #marrying the datasets
 Holc_Bdobs <- st_join(BDobs, HOLC["grade"], join = st_intersects)
 
-#finding the amount of visualizations in each redlined area
+#finding the amount of visualizations in each red lined area
 gradebirds <- Holc_Bdobs |>
   st_drop_geometry() |>
-  dplyr::count(grade, name = "Observation Amount") #|>
-  #dplyr::mutate(pct_blocks = 100 * n_blocks / sum(n_blocks))
+  dplyr::count(grade, name = "Observation Amount") 
 view(gradebirds)
 
 #Visualization
