@@ -7,6 +7,7 @@ editor: visual
 ## Preamble
 
 ```{r}
+#| message: false
 #Library Loading
 library(sf)
 library(here)
@@ -49,12 +50,12 @@ percenttable <- HOLC |>
   st_drop_geometry() |>
   dplyr::count(grade, name = "n_blocks") |>
   dplyr::mutate(pct_blocks = 100 * n_blocks / sum(n_blocks))
-view(percenttable)
+percenttable
 ```
 
 #### Create at least two visualizations summarizing current conditions (from the EJScreen data) within HOLC grades using the mean of the following variables (you may combine variables or create separate plots):
 
--   % low income
+-   \% low income
 -   Percentile for Particulate Matter 2.5
 -   percentile for low life expectancy
 -   Use ggplot for your visualizations! You will first need to calculate mean of each variable grouped by HOLC grade.
@@ -121,11 +122,15 @@ ggplot(plot_long, aes(x = grade, y = percentile)) +
 
 #### Write a brief paragraph reflecting on these results
 
+These plots illustrate some comparisons between redlined districts in Los Angeles and their mean percent low income, the mean life expectancy percentile and the PM 2.5 percentile by redlined grade. The least redlined grade (A) has the lowest mean percent low income, and the lowest PM 2.5 percentile, as well as the highest life expectancy. This increases with each subsequent grade, until the highest redlined grade (D) has the highest mean percent low income, highest PM 2.5 percentile, and lowest life expectancy. These figures illustrate the holdover of historic exclusionary policy and how it can have negative impacts on individuals even in the modern day.
 
 # Part 2: Legacy of redlining in biodiversity observations
+
 #### A figure summarizing the percent of observations within redlined neighborhoods within each HOLC grade
-- The percentage of bird observations within each HOLC grade
-- Include an appropriate title, axis labels, and legend
+
+-   The percentage of bird observations within each HOLC grade
+-   Include an appropriate title, axis labels, and legend
+
 ```{r}
 #making geometries valid
 BDobs <- st_make_valid(BDobs)
@@ -139,8 +144,7 @@ Holc_Bdobs <- st_join(BDobs, HOLC["grade"], join = st_intersects)
 #finding the amount of visualizations in each red lined area
 gradebirds <- Holc_Bdobs |>
   st_drop_geometry() |>
-  dplyr::count(grade, name = "Observation Amount") 
-view(gradebirds)
+  dplyr::count(grade, name = "Observation Amount", na.rm = TRUE) 
 
 #Visualization
 ggplot(gradebirds, aes(x = grade, y = `Observation Amount`)) +
@@ -154,3 +158,7 @@ ggplot(gradebirds, aes(x = grade, y = `Observation Amount`)) +
   theme_minimal(base_size = 12)
 
 ```
+
+#### Write a brief paragraph reflecting on these results
+
+The majority of bird observations were taken in areas without HOLC grades, which is generally unsurprising considering that LA has increased significantly in size since the creation of HOLC grades and redlining. When we ignore the NA points, the majority of the points are concentrated in the A and C grades. This indicates that individuals with higher socioeconomic status have better biodiversity access than those who are lower income.
